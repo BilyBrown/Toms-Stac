@@ -84,7 +84,7 @@ search = client.search(
 print(f"Scenes matching search: {search.matched()}")
 # Collecting the items that match the search criteria
 items = search.get_all_items()
-bands = ["B02", "B03", "B04"]
+bands = ["B02", "B03", "B04", "B08"]
 print(f"Number of items: {len(items)}")
 item = items[22]
 item = item.to_dict()
@@ -94,9 +94,11 @@ assets = items[9].assets
 print(assets["overview"].href)
 print(assets["B08"].href)
 
-b08 = rioxarray.open_rasterio(assets["B08"].href)
-print(b08)
-b08.rio.to_raster("BO8.tif")
+b04_href = assets["B04"].href
+b04 = rioxarray.open_rasterio(b04_href)
+print(b04)
+b04.rio.to_raster("B04.tif")
+
 # dc = stac_load(
 #     items=items,
 #     resolution=10,
