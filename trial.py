@@ -1,6 +1,6 @@
 from pystac_client import Client
 from pystac import ItemCollection, Item
-from odc.stac import stac_load, load
+from odc.stac import stac_load
 from pyproj import CRS
 import logging
 import sys
@@ -17,7 +17,6 @@ from os import makedirs
 import os.path as op
 import requests
 
-
 def s3_to_local(item: dict, dl_folder: str) -> dict:
     """Take in pystac item, download its assets, and update the asset href to point
     to dl location.
@@ -29,17 +28,17 @@ def s3_to_local(item: dict, dl_folder: str) -> dict:
         
     """
 
-    for v in item["assets"].values():
-        fn = op.basename(v["href"])
-        f_path = op.join(dl_folder, fn)
-        if not op.exists(f_path):
-            with requests.get(v["href"], timeout=60, stream=True) as r:
-                r.raise_for_status()
-                with open(f_path, 'wb') as f:
-                    for chunk in r.iter_content(chunk_size=8192): 
-                        f.write(chunk)
-
-        v["href"] = f_path
+    for k in item["assets"].keys():
+        if k in bands:
+            fn = op.basename(item["assets"][k]["href"])
+            f_path = op.join(dl_folder, fn)
+            if not op.exists(f_path):
+                with requests.get(item["assets"][k]["href"], timeout=60, stream=True) as r:
+                    r.raise_for_status()
+                    with open(f_path, 'wb') as f:
+                        for chunk in r.iter_content(chunk_size=8192):
+                            f.write(chunk)
+            item["assets"][k]["href"] = f_path
 
     return item
 
@@ -67,12 +66,9 @@ def download_items_to_local(item_col: ItemCollection, bands: list, wkdir: str) -
 
     return local_ic
 
-
-# Bring in geometry I want to analyze
 toms_run = gpd.read_file("TomsRun.geojson")
 toms_bbox = toms_run.total_bounds
 
-# The product and product location I want to search through
 api_url = "https://earth-search.aws.element84.com/v0"
 collection = "sentinel-s2-l2a-cogs"
 # Opening and searching through the satellite imagery
@@ -80,29 +76,34 @@ client = Client.open(api_url)
 search = client.search(
     collections=[collection],
     bbox=toms_bbox,
-    datetime=['2023-01-01', '2023-03-20'],
-    max_items=10,
-    query={"eo:cloud_cover": {"lt": 20, "gte":0}}
+    datetime=['2022-07-01', '2023-03-22'],
+    max_items=25,
+    query=["eo:cloud_cover<10"]
 )
 
+print(f"Scenes matching search: {search.matched()}")
 # Collecting the items that match the search criteria
 items = search.get_all_items()
-for item in items:
-    print(item)
-
-assets = items[0].assets
-print(assets.keys())
 bands = ["B02", "B03", "B04"]
-# items = download_items_to_local(items, bands, "./sat_image")
-
+print(f"Number of items: {len(items)}")
+item = items[22]
+item = item.to_dict()
 output_crs = CRS.from_epsg(items[0].properties["proj:epsg"])
 
-dc = load(
-    items=items.items,
-    bands=bands,
-    resolution=10,
-    crs=output_crs,
-    groupby="solar_day",
-    bbox=toms_bbox
-)
+assets = items[9].assets
+print(assets["overview"].href)
+print(assets["B08"].href)
 
+b08 = rioxarray.open_rasterio(assets["B08"].href)
+print(b08)
+b08.rio.to_raster("BO8.tif")
+# dc = stac_load(
+#     items=items,
+#     resolution=10,
+#     groupby="solar_day",
+#     crs=output_crs,
+#     bbox=toms_bbox
+# )
+
+
+# items = download_items_to_local(items, bands, "./sat_image")
