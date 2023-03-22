@@ -13,3 +13,8 @@ So far I am just bashing my head on my keyboard and seeing what sticks. I curren
 
 #### Future Goals:
 - to leverage machine learning on the images to determine site quality changes to forests over time (thinnings/natural disturbances) and how this affects the biomass of the area.
+
+
+#### Resources used so far:
+- PyStac tutorial - https://carpentries-incubator.github.io/geospatial-python/05-access-data/index.html
+- ODC tutorial - https://odc-stac.readthedocs.io/en/latest/notebooks/stac-load-e84-aws.html
