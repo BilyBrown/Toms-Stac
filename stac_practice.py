@@ -73,8 +73,8 @@ toms_run = gpd.read_file("TomsRun.geojson")
 toms_bbox = toms_run.total_bounds
 
 # The product and product location I want to search through
-api_url = "https://landsatlook.usgs.gov/stac-server/"
-collection = "landsat-c2l2-st"
+api_url = "https://earth-search.aws.element84.com/v0"
+collection = "sentinel-s2-l2a-cogs"
 # Opening and searching through the satellite imagery
 client = Client.open(api_url)
 search = client.search(
@@ -93,13 +93,13 @@ for item in items:
 assets = items[0].assets
 print(assets.keys())
 bands = ["B02", "B03", "B04"]
-items = download_items_to_local(items, bands, "/sat_image")
+items = download_items_to_local(items, bands, "./sat_image")
 
 output_crs = CRS.from_epsg(items[0].properties["proj:epsg"])
 
 dc = stac_load(
     items=items.items,
-    bands=["red"],
+    bands=bands,
     resolution=10,
     crs=output_crs,
     groupby="solar_day",
