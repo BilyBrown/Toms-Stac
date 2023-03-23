@@ -97,7 +97,8 @@ print(assets["B08"].href)
 b04_href = assets["B04"].href
 b04 = rioxarray.open_rasterio(b04_href)
 print(b04)
-b04.rio.to_raster("B04.tif")
+
+print(items.items[0].assets["B08"].href)
 
 # dc = stac_load(
 #     items=items,
